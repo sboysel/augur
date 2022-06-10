@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import insert
 import sqlalchemy as s
 
 
-# from db_models import *
+from db_models import *
 from config import AugurConfig
 from oauth_key_manager import OauthKeyManager
 
@@ -16,15 +16,17 @@ from oauth_key_manager import OauthKeyManager
 #Encapsulate data for celery task worker api
 
 
-#TODO: Test all methods
+#TODO: Test sql methods
 class TaskSession(s.orm.Session):
 
-    ROOT_AUGUR_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    #ROOT_AUGUR_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
     def __init__(self,logger,config={},platform='github'):
         self.logger = logger
         
-        self.root_augur_dir = TaskSession.ROOT_AUGUR_DIR
+        current_dir = os.getcwd()
+
+        self.root_augur_dir = ''.join(current_dir.partition("augur/")[:2])
         self.__init_config(self.root_augur_dir)
         
         DB_STR = f'postgresql://{self.config["user_database"]}:{self.config["password_database"]}@{self.config["host_database"]}:{self.config["port_database"]}/{self.config["name_database"]}'
@@ -34,9 +36,10 @@ class TaskSession(s.orm.Session):
         
         #print(f"path = {str(ROOT_AUGUR_DIR) + "augur.config.json"}")
         
+
         self.__engine = s.create_engine(DB_STR)
 
-        self.oauths = OauthKeyManager(self.config, db_engine=self.__engine, logger=self.logger)
+        self.__oauths = OauthKeyManager(self.config,self.__engine,self.logger)
 
         super().__init__(self.__engine)
 
@@ -95,4 +98,3 @@ class TaskSession(s.orm.Session):
                 index_elements=natural_keys, set_=dict(value))
             result = self.execute_sql(insert_stmt)
 
-    
