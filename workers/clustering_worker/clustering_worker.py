@@ -40,9 +40,6 @@ class ClusteringWorker(WorkerGitInterfaceable):
 		data_tables = ['repo_cluster_messages','repo_topic','topic_words']
 		operations_tables = ['worker_history', 'worker_job']
 
-		# Run the general worker initialization
-		super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
 		self.config.update({
 			'api_host': self.augur_config.get_value('Server', 'host'),
 			'api_port': self.augur_config.get_value('Server', 'port')
@@ -72,6 +69,9 @@ class ClusteringWorker(WorkerGitInterfaceable):
 		self.num_words_per_topic = 12
 
 		nltk.download('all')		
+		
+		# Run the general worker initialization
+		super().__init__(worker_type, config, given, models, data_tables, operations_tables)
 
 	def clustering_model(self, task, repo_id):
 		#self.logger.info("Clustering Worker init")

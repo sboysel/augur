@@ -31,13 +31,14 @@ class ReleaseWorker(WorkerGitInterfaceable):
         data_tables = ['releases']
         operations_tables = ['worker_history', 'worker_job']
 
-        # Run the general worker initialization
-        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
         # Define data collection info
         self.tool_source = 'Release Worker'
         self.tool_version = '1.0.0'
         self.data_source = 'GitHub API'
+
+        # Run the general worker initialization
+        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
+
 
     def get_release_inf(self, repo_id, release, tag_only):
         if not tag_only:

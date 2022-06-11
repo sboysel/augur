@@ -32,10 +32,6 @@ class DepsLibyearWorker(WorkerGitInterfaceable):
         data_tables = ['repo_deps_libyear']
         operations_tables = ['worker_history', 'worker_job']
 
-
-        # Run the general worker initialization
-        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
         self.config.update({
             'repo_directory': self.augur_config.get_value('Workers', 'facade_worker')['repo_directory']
         })
@@ -43,6 +39,9 @@ class DepsLibyearWorker(WorkerGitInterfaceable):
         self.tool_source = 'Deps Libyear Worker'
         self.tool_version = '1.0.0'
         self.data_source = 'Augur Repository Data'
+
+        # Run the general worker initialization
+        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
 
     def deps_libyear_model(self, entry_info, repo_id):
         """ Data collection and storage method
