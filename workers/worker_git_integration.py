@@ -213,7 +213,10 @@ class WorkerGitInterfaceable(Worker):
         # 1 second of sleep just to dial back how hard we are hitting the API a little bit. 
         # In practice we are hammering hard. Subseconds of pause. A second may help a lot.
         sleep(1)
+        '''
+        For every token returned by the query we are trying to process and understand which token is the most "fresh" and available for the worke we are about to do. 
 
+        '''
         for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
             pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
         ):
@@ -227,6 +230,9 @@ class WorkerGitInterfaceable(Worker):
             try: 
                 response = requests.get(url=url, headers=self.headers, timeout=12)
                 self.logger.debug(f'response: {response}')
+                '''
+                If the response times out, we note the error, then sleep for an additional 12 seconds before hitting the API with an updated call that indicates we are a web browser in the headers. 
+                '''
             except requests.exceptions.Timeout as err: 
                 self.logger.debug('in exception block for requests.get(). \n')
                 self.logger.debug(f'Error: {err}\n')
