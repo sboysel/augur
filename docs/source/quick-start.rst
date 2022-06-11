@@ -7,10 +7,7 @@ Get going fast! Intended for folks familiar with setting up DevOps environments.
 
 Setting up VirtualBox
 ~~~~~~~~~~~~~~~~~~~~~~~
-- Type "Download VirtualBox for Windows" in the search bar.
-- Click on the websight by Oracle.
-.. image:: development-guide/images/A1.png
-  :width: 600  
+- Go to the official box website to download using this link `https://www.virtualbox.org/`
 - Download VirtualBox for "Windows hosts".
 .. image:: development-guide/images/A2.png
   :width: 600  
@@ -58,9 +55,9 @@ Ubuntu download
 
 Installing Ubuntu in VirtualBox
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Open the Machine which we created earlier.
-- In the pop-up, click the disk image where you have downloaded your Ubuntu and click Finish.
-- In the Welcome window select Install Ubuntu and continue with the default options.
+- Open the machine which we have created earlier.
+- Now in the pop-up, click on the disk image where you have downloaded your Ubuntu and click on finish.
+- In the welcome window select Install Ubuntu and move forward with the default options.
 .. image:: development-guide/images/Af.png
   :width: 600  
 - Select Keyboard layout.
@@ -95,6 +92,7 @@ PostgreSQL Installation
 
 .. code-block:: bash
 
+	$ sudo service postgresql start
     $ sudo su -
     $ su - postgres
     $ psql
@@ -118,7 +116,7 @@ Git Configuration
 	git config --global credential.helper cache
 	git config --global credential.helper 'cache --timeout=9999999999999'
 
-- For each platform, perform a command-line login to cache Git credentials for the LINUX user who operates Augur. This step is required to prevent the Facade Commit Counting Diesel from stalling on a command line prompt when repositories move or disappear.
+- For each platform, perform a command-line login  to cache Git credentials for the LINUX user who operates Augur. This step is required in order to prevent the Facade Commit Counting Diesel from stalling on a command-line prompt when repositories move or disappear.
 
 Install Go
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,6 +128,17 @@ Two of Augur's workers use the Go programming language, which needs to be instal
 	sudo apt install snapd
 	sudo snap install go --classic
 
+Incase you encounter any problem following the above commands, try doing these first:
+
+.. code-block:: bash
+
+	sudo apt-get update && sudo apt-get install -yqq daemonize dbus-user-session fontconfig
+	sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+	exec sudo nsenter -t $(pidof systemd) -a su - $LOGNAME
+	snap version
+
+If the last command returns successfully, you can try installing Go again using either of the two options above.
+	
 Python Virtual Environment Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~
 - Set up a Python virtual environment (Python 3.8 and above are now required. Python 3.9 and python 3.10 work as well, though we have tested Python 3.9 on more platforms.)
@@ -137,7 +146,7 @@ Python Virtual Environment Configuration
 
 .. code-block:: bash
 
-	# Ensure you are logged in as your own user on Github and change the "<YOUR_GITHUB_USERNAME>" to your Github username (e.g. "sean")
+	# Ensure you are logged in as your user on Github and change the "<YOUR_GITHUB_USERNAME>" to your Github username (e.g. "sean")
 	git clone https://github.com/<YOUR_GITHUB_USERNAME>/augur.git
 	cd augur/
 	sudo apt install make
@@ -150,7 +159,7 @@ Python Virtual Environment Configuration
 	python -m pip install --upgrade pip
 	make install-dev {Follow prompts. You will need database credentials, a file location for cloned repositories, a GitHub Token, and a GitLab token.}
 
-- Seven sample repositories will load by default. You can delete them if you want to use your own repositories by deleting records from the `repo` table first, then deleting the records from the `repo_groups` table.
+- Seven sample repositories will load by default. You can delete them if you want to use your repositories by deleting records from the `repo` table first, then deleting the records from the `repo_groups` table.
 
 
 .. code-block:: bash
