@@ -52,20 +52,15 @@ class WorkerGitInterfaceable(Worker):
     #database interface, additional functionality with github interface.
     def initialize_database_connections(self):
         super().initialize_database_connections()
-        if self.worker_type == 'clustering_worker' or self.worker_type == 'deps_worker':
-            self.logger.info("no oauth required for this worker. \n")
+        # Organize different api keys/oauths available
+        self.logger.info("Initializing API key.")
+        if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
+            try:
+                self.init_oauths(self.platform)
+            except AttributeError:
+                self.logger.error("Worker not configured to use API key!")
+        else:
             self.oauths = [{'oauth_id': 0}]
-            self.headers = {'Authorization': 'token %s' % self.oauths[0]['access_token']}
-        elif: 
-            # Organize different api keys/oauths available
-            self.logger.info("Initializing API key.")
-            if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
-                try:
-                    self.init_oauths(self.platform)
-                except AttributeError:
-                    self.logger.error("Worker not configured to use API key!")
-            else:
-                self.oauths = [{'oauth_id': 0}]
 
     def find_id_from_login(self, login, platform='github'):
         """ Retrieves our contributor table primary key value for the contributor with
@@ -225,7 +220,16 @@ class WorkerGitInterfaceable(Worker):
             elif platform == 'gitlab':
                 self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
             ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
-            response = requests.get(url=url, headers=self.headers)
+            try: 
+                response = requests.get(url=url, headers=self.headers, timeout=12)
+                self.logger.debug(f'response: {response}')
+            except requests.exceptions.Timeout as err: 
+                self.logger.debug('in exception block for requests.get(). \n')
+                self.logger.debug(f'Error: {err}\n')
+                sleep(12)
+                headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36','Authorization': 'token %s' % oauth['access_token'],}
+                response = requests.get(url=url, headers=headers)
+                self.logger.debug(f'response: {response}\n')
             self.oauths.append({
                     'oauth_id': oauth['oauth_id'],
                     'access_token': oauth['access_token'],
