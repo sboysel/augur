@@ -197,6 +197,7 @@ class WorkerGitInterfaceable(Worker):
             oauthSQL = s.sql.text("""
                 SELECT * FROM worker_oauth WHERE access_token <> '{}' and platform = 'github'
                 """.format(self.config['gh_api_key']))
+            self.logger.debug(f'The oauth key sql is: {oauthSQL}\n')
             key_name = 'gh_api_key'
             rate_limit_header_key = "X-RateLimit-Remaining"
             rate_limit_reset_header_key = "X-RateLimit-Reset"
@@ -212,6 +213,7 @@ class WorkerGitInterfaceable(Worker):
 
         # 1 second of sleep just to dial back how hard we are hitting the API a little bit. 
         # In practice we are hammering hard. Subseconds of pause. A second may help a lot.
+        self.logger.debug('got to 1 second sleep.\n')
         sleep(1)
         '''
         For every token returned by the query we are trying to process and understand which token is the most "fresh" and available for the worke we are about to do. 
