@@ -1,3 +1,4 @@
+#SPDX-License-Identifier: MIT
 
 from workers.worker_persistance import *
 #I figure I can seperate this class into at least three parts.
