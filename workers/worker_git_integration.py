@@ -50,17 +50,20 @@ class WorkerGitInterfaceable(Worker):
             self.data_source = 'Augur Worker Testing'
 
     #database interface, additional functionality with github interface.
-    def initialize_database_connections(self):
+    def initialize_database_connections(self, oauth_required=True):
         super().initialize_database_connections()
         # Organize different api keys/oauths available
-        self.logger.info("Initializing API key.")
-        if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
-            try:
-                self.init_oauths(self.platform)
-            except AttributeError:
-                self.logger.error("Worker not configured to use API key!")
-        else:
-            self.oauths = [{'oauth_id': 0}]
+        if oauth_required == True: 
+            self.logger.info("Initializing API key.")
+            if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
+                try:
+                    self.init_oauths(self.platform)
+                except AttributeError:
+                    self.logger.error("Worker not configured to use API key!")
+            else:
+                self.oauths = [{'oauth_id': 0}]
+        elif: 
+            self.logger.info("API Key not required for this worker.\n")
 
     def find_id_from_login(self, login, platform='github'):
         """ Retrieves our contributor table primary key value for the contributor with
@@ -182,74 +185,76 @@ class WorkerGitInterfaceable(Worker):
 
         return self.find_id_from_login(login, platform)
 
-    def init_oauths(self, platform='github'):
-
-        self.oauths = []
-        self.headers = None
-        self.logger.info("Trying initialization.")
-        # Make a list of api key in the config combined w keys stored in the database
-        # Select endpoint to hit solely to retrieve rate limit
-        #   information from headers of the response
-        # Adjust header keys needed to fetch rate limit information from the API responses
-        if platform == 'github':
-            self.logger.debug("in Github block")
-            url = "https://api.github.com/users/sgoggins"
-            oauthSQL = s.sql.text("""
-                SELECT * FROM worker_oauth WHERE access_token <> '{}' and platform = 'github'
-                """.format(self.config['gh_api_key']))
-            key_name = 'gh_api_key'
-            rate_limit_header_key = "X-RateLimit-Remaining"
-            rate_limit_reset_header_key = "X-RateLimit-Reset"
-            self.logger.debug('end of github block.')
-        elif platform == 'gitlab':
-            url = "https://gitlab.com/api/v4/version"
-            oauthSQL = s.sql.text("""
-                SELECT * FROM worker_oauth WHERE access_token <> '{}' and platform = 'gitlab'
-                """.format(self.config['gitlab_api_key']))
-            key_name = 'gitlab_api_key'
-            rate_limit_header_key = 'ratelimit-remaining'
-            rate_limit_reset_header_key = 'ratelimit-reset'
-
-        for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
-            pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
-        ):
-            self.logger.debug('getting oauth.')
+    def init_oauths(self, platform='github', oauth_required=True):
+        if oauth_required == True: 
+            self.oauths = []
+            self.headers = None
+            self.logger.info("Trying initialization.")
+            # Make a list of api key in the config combined w keys stored in the database
+            # Select endpoint to hit solely to retrieve rate limit
+            #   information from headers of the response
+            # Adjust header keys needed to fetch rate limit information from the API responses
             if platform == 'github':
-                self.headers = {'Authorization': 'token %s' % oauth['access_token']}
-                self.logger.debug('in github oauth block')
+                self.logger.debug("in Github block")
+                url = "https://api.github.com/users/sgoggins"
+                oauthSQL = s.sql.text("""
+                    SELECT * FROM worker_oauth WHERE access_token <> '{}' and platform = 'github'
+                    """.format(self.config['gh_api_key']))
+                key_name = 'gh_api_key'
+                rate_limit_header_key = "X-RateLimit-Remaining"
+                rate_limit_reset_header_key = "X-RateLimit-Reset"
+                self.logger.debug('end of github block.')
             elif platform == 'gitlab':
-                self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
-            ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
-            response = requests.get(url=url, headers=self.headers)
-            self.oauths.append({
-                    'oauth_id': oauth['oauth_id'],
-                    'access_token': oauth['access_token'],
-                    'rate_limit': int(response.headers[rate_limit_header_key]),
-                    'seconds_to_reset': (
-                        datetime.datetime.fromtimestamp(
-                            int(response.headers[rate_limit_reset_header_key])
-                        ) - datetime.datetime.now()
-                    ).total_seconds()
-                })
-            self.logger.debug("Found OAuth available for use: {}".format(self.oauths[-1]))
+                url = "https://gitlab.com/api/v4/version"
+                oauthSQL = s.sql.text("""
+                    SELECT * FROM worker_oauth WHERE access_token <> '{}' and platform = 'gitlab'
+                    """.format(self.config['gitlab_api_key']))
+                key_name = 'gitlab_api_key'
+                rate_limit_header_key = 'ratelimit-remaining'
+                rate_limit_reset_header_key = 'ratelimit-reset'
 
-        if len(self.oauths) == 0:
-            self.logger.info(
-                "No API keys detected, please include one in your config or in the "
-                "worker_oauths table in the augur_operations schema of your database."
-            )
+            for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
+                pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
+            ):
+                self.logger.debug('getting oauth.')
+                if platform == 'github':
+                    self.headers = {'Authorization': 'token %s' % oauth['access_token']}
+                    self.logger.debug('in github oauth block')
+                elif platform == 'gitlab':
+                    self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
+                ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
+                response = requests.get(url=url, headers=self.headers)
+                self.oauths.append({
+                        'oauth_id': oauth['oauth_id'],
+                        'access_token': oauth['access_token'],
+                        'rate_limit': int(response.headers[rate_limit_header_key]),
+                        'seconds_to_reset': (
+                            datetime.datetime.fromtimestamp(
+                                int(response.headers[rate_limit_reset_header_key])
+                            ) - datetime.datetime.now()
+                        ).total_seconds()
+                    })
+                self.logger.debug("Found OAuth available for use: {}".format(self.oauths[-1]))
 
-        # First key to be used will be the one specified in the config (first element in
-        #   self.oauths array will always be the key in use)
-        ## Attempt to get this to circulate the keys more spg 6/7/2022
-        availablekeys = len(self.oauths)
-        keytouse = randint(0,availablekeys-1)
-        if platform == 'github':
-            self.headers = {'Authorization': 'token %s' % self.oauths[keytouse]['access_token']}
-        elif platform == 'gitlab':
-            self.headers = {'Authorization': 'Bearer %s' % self.oauths[keytouse]['access_token']}
+            if len(self.oauths) == 0:
+                self.logger.info(
+                    "No API keys detected, please include one in your config or in the "
+                    "worker_oauths table in the augur_operations schema of your database."
+                )
 
-        self.logger.info("OAuth initialized\n")
+            # First key to be used will be the one specified in the config (first element in
+            #   self.oauths array will always be the key in use)
+            ## Attempt to get this to circulate the keys more spg 6/7/2022
+            availablekeys = len(self.oauths)
+            keytouse = randint(0,availablekeys-1)
+            if platform == 'github':
+                self.headers = {'Authorization': 'token %s' % self.oauths[keytouse]['access_token']}
+            elif platform == 'gitlab':
+                self.headers = {'Authorization': 'Bearer %s' % self.oauths[keytouse]['access_token']}
+
+            self.logger.info("OAuth initialized\n")
+        elif: 
+            self.logger.info("oauth not required for this worker. \n")
 
     def enrich_cntrb_id(
         self, data, key, action_map_additions={'insert': {'source': [], 'augur': []}},

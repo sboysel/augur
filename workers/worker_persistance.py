@@ -172,7 +172,7 @@ class Persistant():
         self.logger = logger
 
     #database interface, the git interfaceable adds additional function to the super method.
-    def initialize_database_connections(self):
+    def initialize_database_connections(self, oauth_required=True):
         DB_STR = 'postgresql://{}:{}@{}:{}/{}'.format(
             self.config['user_database'], self.config['password_database'], self.config['host_database'], self.config['port_database'], self.config['name_database']
         )
