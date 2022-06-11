@@ -52,15 +52,18 @@ class WorkerGitInterfaceable(Worker):
     #database interface, additional functionality with github interface.
     def initialize_database_connections(self):
         super().initialize_database_connections()
-        # Organize different api keys/oauths available
-        self.logger.info("Initializing API key.")
-        if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
-            try:
-                self.init_oauths(self.platform)
-            except AttributeError:
-                self.logger.error("Worker not configured to use API key!")
-        else:
-            self.oauths = [{'oauth_id': 0}]
+        if self.worker_type == 'clustering_worker' or self.worker_type == 'deps_worker':
+            self.logger.info("no oauth required for this worker. \n")
+        elif: 
+            # Organize different api keys/oauths available
+            self.logger.info("Initializing API key.")
+            if 'gh_api_key' in self.config or 'gitlab_api_key' in self.config:
+                try:
+                    self.init_oauths(self.platform)
+                except AttributeError:
+                    self.logger.error("Worker not configured to use API key!")
+            else:
+                self.oauths = [{'oauth_id': 0}]
 
     def find_id_from_login(self, login, platform='github'):
         """ Retrieves our contributor table primary key value for the contributor with
