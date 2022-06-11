@@ -228,7 +228,16 @@ class WorkerGitInterfaceable(Worker):
                 self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
             ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
             try: 
-                response = requests.get(url=url, headers=self.headers, timeout=12)
+                response = requests.get(url=url, headers=self.headers, timeout=5)
+                if response.status_code != 200:
+                    self.logger.debug(f'response code is {response.status_code}\n')
+                    sleep(12)
+                    self.logger.debug('Going again after sleeping for 12 seconds! Added web browser headers.\n')
+                    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36','Authorization': 'token %s' % oauth['access_token'],}
+                    response = requests.get(url=url, headers=headers)
+                    self.logger.debug(f'response: {response}\n')
+                else:
+                    print(response.status_code)
                 self.logger.debug(f'response: {response}')
                 '''
                 If the response times out, we note the error, then sleep for an additional 12 seconds before hitting the API with an updated call that indicates we are a web browser in the headers. 
