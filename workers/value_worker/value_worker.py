@@ -27,10 +27,6 @@ class ValueWorker(WorkerGitInterfaceable):
         data_tables = ['repo_labor']
         operations_tables = ['worker_history', 'worker_job']
 
-
-        # Run the general worker initialization
-        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
         self.config.update({
             'repo_directory': self.augur_config.get_value('Workers', 'facade_worker')['repo_directory']
         })
@@ -38,6 +34,9 @@ class ValueWorker(WorkerGitInterfaceable):
         self.tool_source = 'Value Worker'
         self.tool_version = '1.0.0'
         self.data_source = 'SCC'
+
+        # Run the general worker initialization
+        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
 
     def value_model(self, entry_info, repo_id):
         """ Data collection and storage method
