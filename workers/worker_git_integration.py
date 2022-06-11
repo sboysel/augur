@@ -220,7 +220,7 @@ class WorkerGitInterfaceable(Worker):
 
         '''
 
-        self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here. {[{'oauth_id': 0, 'access_token': self.config[key_name]}]}')
+        self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here. {self.config[key_name]}\n ')
         for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
             pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
         ):
