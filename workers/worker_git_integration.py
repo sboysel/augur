@@ -210,6 +210,10 @@ class WorkerGitInterfaceable(Worker):
             rate_limit_header_key = 'ratelimit-remaining'
             rate_limit_reset_header_key = 'ratelimit-reset'
 
+        # 1 second of sleep just to dial back how hard we are hitting the API a little bit. 
+        # In practice we are hammering hard. Subseconds of pause. A second may help a lot.
+        sleep(1)
+
         for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
             pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
         ):
