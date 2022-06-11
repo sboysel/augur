@@ -55,6 +55,7 @@ class WorkerGitInterfaceable(Worker):
         if self.worker_type == 'clustering_worker' or self.worker_type == 'deps_worker':
             self.logger.info("no oauth required for this worker. \n")
             self.oauths = [{'oauth_id': 0}]
+            self.headers = {'Authorization': 'token %s' % self.oauths[0]['access_token']}
         elif: 
             # Organize different api keys/oauths available
             self.logger.info("Initializing API key.")
