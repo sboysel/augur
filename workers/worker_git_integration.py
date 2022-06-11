@@ -223,58 +223,59 @@ class WorkerGitInterfaceable(Worker):
             For every token returned by the query we are trying to process and understand which token is the most "fresh" and available for the worke we are about to do. 
 
             '''
+        except Exception as e: 
+            self.logger.debug(f"Exception: {e}.")
+            stacker = traceback.format_exc()
+            self.logger.debug(f"{stacker}")
+            continue
 
-            self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here. {self.config[key_name]}\n ')
-            for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
-                pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
-            ):
-                self.logger.debug('getting oauth.')
-                if platform == 'github':
-                    self.headers = {'Authorization': 'token %s' % oauth['access_token']}
-                    self.logger.debug('in github oauth block')
-                elif platform == 'gitlab':
-                    self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
-                ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
-                try: 
-                    response = requests.get(url=url, headers=self.headers, timeout=5)
-                    if response.status_code != 200:
-                        self.logger.debug(f'response code is {response.status_code}\n')
-                        sleep(12)
-                        self.logger.debug('Going again after sleeping for 12 seconds! Added web browser headers.\n')
-                        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36','Authorization': 'token %s' % oauth['access_token'],}
-                        response = requests.get(url=url, headers=headers)
-                        self.logger.debug(f'response: {response}\n')
-                    else:
-                        print(response.status_code)
-                    self.logger.debug(f'response: {response}')
-                    '''
-                    If the response times out, we note the error, then sleep for an additional 12 seconds before hitting the API with an updated call that indicates we are a web browser in the headers. 
-
-                    Without this exception handling, failed responses were, in some cases, infinitately pausing the worker; effectively kill it mid-task. 
-                    '''
-                except requests.exceptions.Timeout as err: 
-                    self.logger.debug('in exception block for requests.get(). \n')
-                    self.logger.debug(f'Error: {err}\n')
+        self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here. {self.config[key_name]}\n ')
+        for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
+            pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
+        ):
+            self.logger.debug('getting oauth.')
+            if platform == 'github':
+                self.headers = {'Authorization': 'token %s' % oauth['access_token']}
+                self.logger.debug('in github oauth block')
+            elif platform == 'gitlab':
+                self.headers = {'Authorization': 'Bearer %s' % oauth['access_token']}
+            ## Changed timeout from 180 to 12. Seems to be hanging in some workers. 
+            try: 
+                response = requests.get(url=url, headers=self.headers, timeout=5)
+                if response.status_code != 200:
+                    self.logger.debug(f'response code is {response.status_code}\n')
                     sleep(12)
+                    self.logger.debug('Going again after sleeping for 12 seconds! Added web browser headers.\n')
                     headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36','Authorization': 'token %s' % oauth['access_token'],}
                     response = requests.get(url=url, headers=headers)
                     self.logger.debug(f'response: {response}\n')
-                self.oauths.append({
-                        'oauth_id': oauth['oauth_id'],
-                        'access_token': oauth['access_token'],
-                        'rate_limit': int(response.headers[rate_limit_header_key]),
-                        'seconds_to_reset': (
-                            datetime.datetime.fromtimestamp(
-                                int(response.headers[rate_limit_reset_header_key])
-                            ) - datetime.datetime.now()
-                        ).total_seconds()
-                    })
-                self.logger.debug("Found OAuth available for use: {}".format(self.oauths[-1]))
-            except Exception as e: 
-                self.logger.debug(f"pr_commit exception registered: {e}.")
-                stacker = traceback.format_exc()
-                self.logger.debug(f"{stacker}")
-                continue
+                else:
+                    print(response.status_code)
+                self.logger.debug(f'response: {response}')
+                '''
+                If the response times out, we note the error, then sleep for an additional 12 seconds before hitting the API with an updated call that indicates we are a web browser in the headers. 
+
+                Without this exception handling, failed responses were, in some cases, infinitately pausing the worker; effectively kill it mid-task. 
+                '''
+            except requests.exceptions.Timeout as err: 
+                self.logger.debug('in exception block for requests.get(). \n')
+                self.logger.debug(f'Error: {err}\n')
+                sleep(12)
+                headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36','Authorization': 'token %s' % oauth['access_token'],}
+                response = requests.get(url=url, headers=headers)
+                self.logger.debug(f'response: {response}\n')
+            self.oauths.append({
+                    'oauth_id': oauth['oauth_id'],
+                    'access_token': oauth['access_token'],
+                    'rate_limit': int(response.headers[rate_limit_header_key]),
+                    'seconds_to_reset': (
+                        datetime.datetime.fromtimestamp(
+                            int(response.headers[rate_limit_reset_header_key])
+                        ) - datetime.datetime.now()
+                    ).total_seconds()
+                })
+            self.logger.debug("Found OAuth available for use: {}".format(self.oauths[-1]))
+
 
         if len(self.oauths) == 0:
             self.logger.info(
