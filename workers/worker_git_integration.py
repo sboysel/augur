@@ -216,8 +216,8 @@ class WorkerGitInterfaceable(Worker):
 
         # 1 second of sleep just to dial back how hard we are hitting the API a little bit. 
         # In practice we are hammering hard. Subseconds of pause. A second may help a lot.
-        self.logger.debug('got to 1 second sleep.\n')
-        sleep(1)
+        #self.logger.debug('got to 1 second sleep.\n')
+        #sleep(1)
         '''
         For every token returned by the query we are trying to process and understand which token is the most "fresh" and available for the worke we are about to do. 
         self.logger.debug(f"Exception: {e}.")
@@ -227,7 +227,7 @@ class WorkerGitInterfaceable(Worker):
 
         '''
 
-        self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here. {self.config[key_name]}\n ')
+        self.logger.debug(f'Printing the oauth for loop values. Seems to get stuck here.\n ')
         for oauth in [{'oauth_id': 0, 'access_token': self.config[key_name]}] + json.loads(
             pd.read_sql(oauthSQL, self.helper_db, params={}).to_json(orient="records")
         ):
