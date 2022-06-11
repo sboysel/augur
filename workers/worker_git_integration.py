@@ -232,6 +232,8 @@ class WorkerGitInterfaceable(Worker):
                 self.logger.debug(f'response: {response}')
                 '''
                 If the response times out, we note the error, then sleep for an additional 12 seconds before hitting the API with an updated call that indicates we are a web browser in the headers. 
+
+                Without this exception handling, failed responses were, in some cases, infinitately pausing the worker; effectively kill it mid-task. 
                 '''
             except requests.exceptions.Timeout as err: 
                 self.logger.debug('in exception block for requests.get(). \n')
