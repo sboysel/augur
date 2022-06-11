@@ -31,13 +31,14 @@ class RepoInfoWorker(WorkerGitInterfaceable):
         data_tables = ['repo_info', 'repo']
         operations_tables = ['worker_history', 'worker_job']
 
-        # Run the general worker initialization
-        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
         # Define data collection info
         self.tool_source = 'Repo Info Worker'
         self.tool_version = '1.1.0'
         self.data_source = 'GitHub API'
+
+        # Run the general worker initialization
+        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
+
 
     def repo_info_model(self, task, repo_id):
 

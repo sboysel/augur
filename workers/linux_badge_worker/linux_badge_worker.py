@@ -28,13 +28,13 @@ class LinuxBadgeWorker(WorkerGitInterfaceable):
         data_tables = ['repo_badging']
         operations_tables = ['worker_history', 'worker_job']
 
-        # Run the general worker initialization
-        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
         self.config.update({"endpoint": "https://bestpractices.coreinfrastructure.org/projects.json?pq="})
         self.tool_source = 'Linux Badge Worker'
         self.tool_version = '1.0.0'
         self.data_source = 'CII Badging API'
+
+        # Run the general worker initialization
+        super().__init__(worker_type, config, given, models, data_tables, operations_tables)
 
 
     def badges_model(self, entry_info, repo_id):

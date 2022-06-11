@@ -41,9 +41,6 @@ class DiscourseAnalysisWorker(WorkerGitInterfaceable):
 		data_tables = ['discourse_insights']
 		operations_tables = ['worker_history', 'worker_job']
 
-		# Run the general worker initialization
-		super().__init__(worker_type, config, given, models, data_tables, operations_tables)
-
 		self.config.update({
 			'api_host': self.augur_config.get_value('Server', 'host'),
 			'api_port': self.augur_config.get_value('Server', 'port')
@@ -53,6 +50,9 @@ class DiscourseAnalysisWorker(WorkerGitInterfaceable):
 		self.tool_source = 'Discourse Worker'
 		self.tool_version = '0.1.0'
 		self.data_source = 'Analysis of Issue/PR Messages'
+
+		# Run the general worker initialization
+		super().__init__(worker_type, config, given, models, data_tables, operations_tables)
 		
 		#define discourse labeling specific parameters
 		
